@@ -9,14 +9,85 @@
 #include <linux/version.h>
 #pragma GCC diagnostic pop
 
+#include "./shared_state.h"
+
 MODULE_LICENSE("GPL");
 #define UKM_MINOR MISC_DYNAMIC_MINOR
 
 typedef spinlock_t SpinLock;
 SpinLock global_mutex;
 
+struct shared_state* shared_data;
+
+bool checker_active;
+
+static void driver_map_memory(void* arg)
+{
+  struct map_memory_args* args = (struct map_memory_args*)arg;
+  void* user_ptr = NULL;
+  (void) user_ptr;
+  (void) args;
+  // map user memory
+  // copy user ptr
+  // unmap user memory
+  // get_user_page(user_ptr)
+  // store the now permanently mapped pointer globally?
+  // set user_mem->mapped = true
+
+  return;
+}
+
+static void driver_check_buffer(bool* arg)
+{
+  bool result = false;
+  unsigned int i;
+  (void) arg;
+  if (!shared_data)
+    goto exit;
+
+  for (i = 0; i < 4096; i++)
+    result &= (shared_data->data[i] == 'C');
+
+exit:
+  // write_to_user(arg, sizeof(result, result))
+  // copy result to arg->result;
+  return;
+}
+
+static void driver_mutate(void)
+{
+  // mutate each byte in shared_data to "C"
+  if (shared_data)
+    memset(shared_data, 'C', 4096);
+  return;
+}
+
+static void driver_unmap_memory(void)
+{
+  // put_user_pages on shared_buffer
+  return;
+}
+
 static long MainDeviceIoctl(struct file* file, unsigned int ioctl, unsigned long arg)
 {
+  enum driver_args cmd = (enum driver_args) ioctl;
+  switch (cmd)
+  {
+    case UKM_MAP_MEMORY:
+      driver_map_memory((void*)arg);
+      break;
+    case UKM_CHECK_BUFFER:
+      driver_check_buffer((bool*)arg);
+      break;
+    case UKM_MUTATE:
+      driver_mutate();
+      break;
+    case UKM_UNMAP_MEMORY:
+      driver_unmap_memory();
+      break;
+    default:
+      break;
+  }
 	return 0;
 }
 
