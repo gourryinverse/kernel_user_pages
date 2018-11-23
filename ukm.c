@@ -7,6 +7,8 @@
 #include <linux/semaphore.h>
 #include <linux/ioctl.h>
 #include <linux/version.h>
+#include <linux/highmem.h>
+#include <linux/mm.h>
 #pragma GCC diagnostic pop
 
 #include "./shared_state.h"
@@ -17,78 +19,80 @@ MODULE_LICENSE("GPL");
 typedef spinlock_t SpinLock;
 SpinLock global_mutex;
 
-struct shared_state* shared_data;
+char* shared_data = NULL;
+struct page* user_page = NULL;
 
-bool checker_active;
-
-static void driver_map_memory(void* arg)
+static int driver_map_memory(void* arg)
 {
-  struct map_memory_args* args = (struct map_memory_args*)arg;
-  void* user_ptr = NULL;
-  (void) user_ptr;
-  (void) args;
-  // map user memory
-  // copy user ptr
-  // unmap user memory
-  // get_user_page(user_ptr)
-  // store the now permanently mapped pointer globally?
-  // set user_mem->mapped = true
-
-  return;
+  int ret = 0;
+  if ((ret = get_user_pages_fast((unsigned long)arg,
+    1, 1, &user_page)) < 0)
+    return ret;
+  if ((shared_data = kmap(user_page)) == NULL)
+    return -1;
+  return 0;
 }
 
-static void driver_check_buffer(bool* arg)
+static int driver_check_buffer(void)
 {
-  bool result = false;
+  bool result = true;
   unsigned int i;
-  (void) arg;
   if (!shared_data)
-    goto exit;
+    return -1;
 
   for (i = 0; i < 4096; i++)
-    result &= (shared_data->data[i] == 'C');
+    result &= (shared_data[i] == 'A');
 
-exit:
-  // write_to_user(arg, sizeof(result, result))
-  // copy result to arg->result;
-  return;
+  return result ? 0 : -1;
 }
 
-static void driver_mutate(void)
+static int driver_mutate(void)
 {
   // mutate each byte in shared_data to "C"
   if (shared_data)
-    memset(shared_data, 'C', 4096);
-  return;
+    memset(shared_data, 'B', 4096);
+  SetPageDirty(user_page);
+  return 0;
 }
 
-static void driver_unmap_memory(void)
+static int driver_unmap_memory(void)
 {
   // put_user_pages on shared_buffer
-  return;
+  if (shared_data)
+  {
+    kunmap(user_page);
+    shared_data = NULL;
+  }
+  if (user_page)
+  {
+    put_page(user_page);
+    user_page = NULL;
+  }
+  return 0;
 }
 
 static long MainDeviceIoctl(struct file* file, unsigned int ioctl, unsigned long arg)
 {
+  int ret = 0;
   enum driver_args cmd = (enum driver_args) ioctl;
   switch (cmd)
   {
     case UKM_MAP_MEMORY:
-      driver_map_memory((void*)arg);
+      ret = driver_map_memory((void*)arg);
       break;
     case UKM_CHECK_BUFFER:
-      driver_check_buffer((bool*)arg);
+      ret = driver_check_buffer();
       break;
     case UKM_MUTATE:
-      driver_mutate();
+      ret = driver_mutate();
       break;
     case UKM_UNMAP_MEMORY:
-      driver_unmap_memory();
+      ret = driver_unmap_memory();
       break;
     default:
       break;
   }
-	return 0;
+	return ret;
 }
 
 static int MainDeviceOpen(struct inode* inode, struct file* file)
