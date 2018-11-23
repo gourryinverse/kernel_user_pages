@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <libexplain/ioctl.h>
 
 #include "shared_state.h"
 
@@ -26,6 +27,7 @@ int main(void)
     printf("Error - driver failed to map memory\n");
     goto exit;
   }
+  printf("Driver mapped memory\n");
 
   memset(ptr, 'A', 4096);
 
@@ -34,17 +36,21 @@ int main(void)
     printf("Error - driver does not see A's\n");
     goto unmap;
   }
+  printf("Driver sees A's\n");
 
   if ((ret = ioctl(fd, UKM_MUTATE, NULL)) < 0)
   {
-    printf("Error - driver failed mutate ioctl\n");
+    printf("Error - driver failed mutate ioctl.\n");
     goto unmap;
   }
+  printf("Driver attempted to mutate memory\n");
 
   for (i = 0; i < 4096; i++)
-    result &= (((char*)ptr)[i] == 'A');
+    result &= (((char*)ptr)[i] == 'B');
   if (!result)
     printf("Error - driver failed to mutate or flush changes\n");
+  else
+    printf("Driver successfully mutated memory\n");
 
 unmap:
   if ((ret = ioctl(fd, UKM_UNMAP_MEMORY, NULL)) < 0)

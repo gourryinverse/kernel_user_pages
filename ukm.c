@@ -25,9 +25,9 @@ struct page* user_page = NULL;
 static int driver_map_memory(void* arg)
 {
   int ret = 0;
-  if ((ret = get_user_pages_fast((unsigned long)arg,
-    1, 1, &user_page)) < 0)
-    return ret;
+  ret = get_user_pages_fast((unsigned long)arg, 1, 1, &user_page);
+  if (ret != 1)
+    return -1;
   if ((shared_data = kmap(user_page)) == NULL)
     return -1;
   return 0;
@@ -48,10 +48,20 @@ static int driver_check_buffer(void)
 
 static int driver_mutate(void)
 {
+  int i = 0;
   // mutate each byte in shared_data to "C"
+  if (!access_ok(shared_data, VERIFY_WRITE, 4096))
+  {
+    printk("access no bueno\n");
+    return -1;
+  }
   if (shared_data)
-    memset(shared_data, 'B', 4096);
-  SetPageDirty(user_page);
+  {
+    for (i = 0; i < 4096; i++)
+      shared_data[i] = 'B';
+    if (!PageReserved(user_page))
+      SetPageDirty(user_page);
+  }
   return 0;
 }
 
@@ -73,7 +83,7 @@ static int driver_unmap_memory(void)
 
 static long MainDeviceIoctl(struct file* file, unsigned int ioctl, unsigned long arg)
 {
-  int ret = 0;
+  int ret = -1;
   enum driver_args cmd = (enum driver_args) ioctl;
   switch (cmd)
   {
