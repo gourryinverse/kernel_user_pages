@@ -3,21 +3,19 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 int main(void)
 {
-  unsigned int i = 0;
-  unsigned int size = 0x80000000;
+  unsigned int size = 0x20000000;
   unsigned int page = 0;
   char* mem = NULL;
+  mem = malloc(size);
+  if (!mem)
+    return -1;
   while (true)
   {
-    mem = malloc(size);
-    if (!mem)
-      return -1;
     for (page = 0; page < (size/4096); page++)
-      mem[i * 4096] = 'A';
-    free(mem);
-    mem = NULL;
+       memset(&mem[page*4096], 'A', 4096);
   }
   return 0;
 }
