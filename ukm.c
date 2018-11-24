@@ -38,14 +38,19 @@ static int driver_check_buffer(char* curchar)
   bool result = true;
   unsigned int i;
   char kcurchar = '\0';
+  unsigned long flags;
   if (!access_ok(curchar, VERIFY_READ, 1))
     return -1;
   copy_from_user(&kcurchar, curchar, 1);
   if (!shared_data)
     return -1;
 
+  local_irq_save(flags);
+  preempt_disable();
   for (i = 0; i < 4096; i++)
     result &= (shared_data[i] == kcurchar);
+  preempt_enable();
+  local_irq_restore(flags);
 
   return result ? 0 : -1;
 }
@@ -53,16 +58,21 @@ static int driver_check_buffer(char* curchar)
 static int driver_mutate(char* nextchar)
 {
   char knextchar = '\0';
+  unsigned long flags;
   if (!access_ok(nextchar, VERIFY_READ, 1))
     return -1;
   copy_from_user(&knextchar, nextchar, 1);
 
   // mutate each byte in shared_data to "C"
+  local_irq_save(flags);
+  preempt_disable();
   if (!access_ok(shared_data, VERIFY_WRITE, 4096))
     return -1;
   if (shared_data)
   {
     memset(shared_data, knextchar, 4096);
+    preempt_enable();
+    local_irq_restore(flags);
     if (!PageReserved(user_page))
       SetPageDirty(user_page);
   }
