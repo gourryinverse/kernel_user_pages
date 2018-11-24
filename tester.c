@@ -16,6 +16,8 @@ int main(void)
   unsigned int i = 0;
   bool result = true;
   void* ptr = NULL;
+  char * curchar = malloc(sizeof(char));
+  *curchar = 'A';
 
   if ((ret = posix_memalign(&ptr, 4096, 4096)) < 0)
     return ret;
@@ -29,32 +31,36 @@ int main(void)
   }
   printf("Driver mapped memory\n");
 
-  memset(ptr, 'A', 4096);
-
-  if ((ret = ioctl(fd, UKM_CHECK_BUFFER, NULL)) < 0)
+  while (true)
   {
-    printf("Error - driver does not see A's\n");
-    goto unmap;
+    memset(ptr, *curchar, 4096);
+    if ((ret = ioctl(fd, UKM_CHECK_BUFFER, curchar)) < 0)
+    {
+      printf("Error - driver does not see userland mutation\n");
+      goto unmap;
+    }
+
+    (*curchar)++;
+    if ((ret = ioctl(fd, UKM_MUTATE, curchar)) < 0)
+    {
+      printf("Error - driver failed mutate ioctl.\n");
+      goto unmap;
+    }
+
+    for (i = 0; i < 4096; i++)
+      result &= (((char*)ptr)[i] == (*curchar));
+    if (!result)
+    {
+      printf("Error - userland does not see kernel land mutation\n");
+      goto unmap;
+    }
+    (*curchar)++;
   }
-  printf("Driver sees result of memset\n");
-
-  if ((ret = ioctl(fd, UKM_MUTATE, NULL)) < 0)
-  {
-    printf("Error - driver failed mutate ioctl.\n");
-    goto unmap;
-  }
-
-  for (i = 0; i < 4096; i++)
-    result &= (((char*)ptr)[i] == 'B');
-  if (!result)
-    printf("Error - driver failed to mutate or flush changes\n");
-  else
-    printf("Driver successfully mutated memory\n");
-
 unmap:
   if ((ret = ioctl(fd, UKM_UNMAP_MEMORY, NULL)) < 0)
     printf("Error - driver failed to unmap memory\n");
 exit:
   free(ptr);
+  free(curchar);
 	return ret;
 }

@@ -33,35 +33,36 @@ static int driver_map_memory(void* arg)
   return 0;
 }
 
-static int driver_check_buffer(void)
+static int driver_check_buffer(char* curchar)
 {
   bool result = true;
   unsigned int i;
+  char kcurchar = '\0';
+  if (!access_ok(curchar, VERIFY_READ, 1))
+    return -1;
+  copy_from_user(&kcurchar, curchar, 1);
   if (!shared_data)
     return -1;
 
   for (i = 0; i < 4096; i++)
-    result &= (shared_data[i] == 'A');
+    result &= (shared_data[i] == kcurchar);
 
   return result ? 0 : -1;
 }
 
-static int driver_mutate(void)
+static int driver_mutate(char* nextchar)
 {
-  int i = 0;
+  char knextchar = '\0';
+  if (!access_ok(nextchar, VERIFY_READ, 1))
+    return -1;
+  copy_from_user(&knextchar, nextchar, 1);
+
   // mutate each byte in shared_data to "C"
   if (!access_ok(shared_data, VERIFY_WRITE, 4096))
     return -1;
   if (shared_data)
   {
-    for (i = 0; i < 4096; i++)
-      shared_data[i] = 'B';
-
-    for (i = 0; i < 4096; i++)
-    {
-      if (shared_data[i] != 'B')
-        break;
-    }
+    memset(shared_data, knextchar, 4096);
     if (!PageReserved(user_page))
       SetPageDirty(user_page);
   }
@@ -94,10 +95,10 @@ static long MainDeviceIoctl(struct file* file, unsigned int ioctl, unsigned long
       ret = driver_map_memory((void*)arg);
       break;
     case UKM_CHECK_BUFFER:
-      ret = driver_check_buffer();
+      ret = driver_check_buffer((void*)arg);
       break;
     case UKM_MUTATE:
-      ret = driver_mutate();
+      ret = driver_mutate((void*)arg);
       break;
     case UKM_UNMAP_MEMORY:
       ret = driver_unmap_memory();
