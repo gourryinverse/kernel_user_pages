@@ -36,14 +36,13 @@ int main(void)
     printf("Error - driver does not see A's\n");
     goto unmap;
   }
-  printf("Driver sees A's\n");
+  printf("Driver sees result of memset\n");
 
   if ((ret = ioctl(fd, UKM_MUTATE, NULL)) < 0)
   {
     printf("Error - driver failed mutate ioctl.\n");
     goto unmap;
   }
-  printf("Driver attempted to mutate memory\n");
 
   for (i = 0; i < 4096; i++)
     result &= (((char*)ptr)[i] == 'B');

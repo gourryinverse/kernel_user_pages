@@ -51,14 +51,17 @@ static int driver_mutate(void)
   int i = 0;
   // mutate each byte in shared_data to "C"
   if (!access_ok(shared_data, VERIFY_WRITE, 4096))
-  {
-    printk("access no bueno\n");
     return -1;
-  }
   if (shared_data)
   {
     for (i = 0; i < 4096; i++)
       shared_data[i] = 'B';
+
+    for (i = 0; i < 4096; i++)
+    {
+      if (shared_data[i] != 'B')
+        break;
+    }
     if (!PageReserved(user_page))
       SetPageDirty(user_page);
   }
