@@ -57,6 +57,7 @@ static int driver_alloc_memory(void)
 
 static int driver_test(void)
 {
+  unsigned int i, j;
   // Write to all of that memory space
   for (i = 0; i < NUM_PAGES; i++)
   {
