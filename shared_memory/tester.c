@@ -59,6 +59,7 @@ int main(void)
     printf("Error - driver failed to verify memory\n");
     goto cleanup;
   }
+  printf("Driver verified mutation\n");
 
   if ((ret = ioctl(fd, UKM_MUTATE)) < 0)
   {
@@ -75,6 +76,8 @@ int main(void)
       break;
     }
   }
+  if (ret == 0)
+    printf("Tester verified mutation\n");
 
 cleanup:
   // Unmap the kernel memory, re-map with anonymous memory
