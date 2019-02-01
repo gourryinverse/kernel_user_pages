@@ -134,7 +134,6 @@ static void MainDeviceMemoryMapClose(struct vm_area_struct* vma)
 
 static int MainDeviceMemoryMapFault(struct vm_fault* vmf)
 {
-  printk("pgoff: %lx\n", vmf->pgoff);
   vmf->page = page_structs[vmf->pgoff];
   if (vmf->page)
     get_page(vmf->page);
