@@ -21,37 +21,23 @@ SpinLock global_mutex;
 
 #define NUM_PAGES 4
 struct page* page_structs[NUM_PAGES];
-char* vmapped_ptr;
+char* vmalloc_ptr;
 
 static int driver_alloc_memory(void)
 {
   unsigned int i;
-  int success = 0;
-  vmapped_ptr = NULL;
+  int success = -1;
+  vmalloc_ptr = NULL;
   memset(page_structs, '\0', sizeof(page_structs));
 
+  if (!(vmalloc_ptr = vmalloc(4096 * NUM_PAGES)))
+    goto exit;
+
   for (i = 0; i < NUM_PAGES; i++)
-  {
-    if (!(page_structs[i] = alloc_page(GFP_KERNEL | __GFP_HIGHMEM)))
-    {
-      success = -1;
-      break;
-    }
-  }
+   page_structs[i] =  virt_to_page(vmalloc_ptr + (i*4096));
 
-  if (success < 0)
-  {
-    for (i = 0; i < NUM_PAGES; i++)
-    {
-      if (page_structs[i])
-        __free_page(page_structs[i]);
-      else
-        break;
-    }
-  }
-
-  vmapped_ptr = vmap(page_structs, NUM_PAGES, VM_MAP, PAGE_KERNEL); 
-
+  success = 0;
+exit:
   return success;
 }
 
@@ -62,31 +48,16 @@ static int driver_test(void)
   for (i = 0; i < NUM_PAGES; i++)
   {
     for (j = 0; j < 4096; j++)
-      vmapped_ptr[((i * 4096) + j)] = 'A';
+      vmalloc_ptr[((i * 4096) + j)] = 'A';
   }
   return 0;
 }
 
 static int driver_free_memory(void)
 {
-  unsigned int i;
-
-  if (vmapped_ptr)
-  {
-    vunmap(vmapped_ptr);
-    vmapped_ptr = NULL;
-  }
-
-  for (i = 0; i < NUM_PAGES; i++)
-  {
-    if (page_structs[i])
-    {
-      __free_page(page_structs[i]);
-      page_structs[i] = NULL;
-    }
-    else
-      break;
-  }
+  vfree(vmalloc_ptr);
+  vmalloc_ptr = NULL;
+  memset(page_structs, '\0', sizeof(page_structs));
   return 0;
 }
 

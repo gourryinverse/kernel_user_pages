@@ -1,11 +1,11 @@
 # Usage
-This driver allocates 16kb worth of 4kb pages with alloc\_pages.
+This driver allocates 16KB worth of 4kb pages with vmalloc.
 It then utilizes the vmap call to map a virtually contiguous
 space such that a 16KB structure stored on the page range
 can be accessed with ease.
 
 Open questions:
-1) Do vmap mappings survive memory pressure
+1) Do vmalloc allocations survive memory pressure
 
 ## Building
 make  
@@ -14,10 +14,10 @@ make
 sudo insmod ukm.ko
 
 ## Generating incorrect results
-Launch tester, which calls the driver to kmalloc and vmap memory.
+Launch tester, which calls the driver to vmalloc memory.
 It then sends an IOCTL to begin testing access.
 
-During this access, it will access the vmap'd pages for about 
+During this access, it will access the vmalloc'd pages for about 
 1,000,000 iterations and return to the user process, where it will
 sleep for a second or two before repeating.
 
