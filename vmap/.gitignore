@@ -1,0 +1,11 @@
+*.ko
+*.o
+*.swp
+*.swo
+*.cmd
+*.mod.c
+.tmp_versions
+Module.symvers
+modules.order
+tester
+memspiker
