@@ -12,14 +12,14 @@
 
 int main(void)
 {
-	int fd = 0;
-	int ret = 0;
+  int fd = 0;
+  int ret = 0;
   unsigned int i = 0;
   bool result = true;
 
-	fd = open("/dev/ukm", O_RDONLY, 0);
+  fd = open("/dev/ukm", O_RDONLY, 0);
 
-	if ((ret = ioctl(fd, UKM_ALLOC_MEMORY, 0)) < 0)
+  if ((ret = ioctl(fd, UKM_ALLOC_MEMORY, 0)) < 0)
   {
     printf("Error - driver failed to allocate and map memory\n");
     goto exit;
@@ -38,6 +38,8 @@ int main(void)
     printf("Error - driver fialed to unmap and free memory\n");
 
   printf("Freed memory\n");
+
 exit:
-	return ret;
+  close(fd);
+  return ret;
 }

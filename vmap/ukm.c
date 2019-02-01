@@ -57,6 +57,12 @@ static int driver_alloc_memory(void)
 
 static int driver_test(void)
 {
+  // Write to all of that memory space
+  for (i = 0; i < NUM_PAGES; i++)
+  {
+    for (j = 0; j < 4096; j++)
+      vmapped_ptr[((i * 4096) + j)] = 'A';
+  }
   return 0;
 }
 
@@ -102,53 +108,53 @@ static long MainDeviceIoctl(struct file* file, unsigned int ioctl,
     default:
       break;
   }
-	return ret;
+  return ret;
 }
 
 static int MainDeviceOpen(struct inode* inode, struct file* file)
 {
-	return 0;
+  return 0;
 }
 
 static int MainDeviceRelease(struct inode* inode, struct file* file)
 {
-	return 0;
+  return 0;
 }
 
 static int MainDeviceMemoryMap(struct file* file, struct vm_area_struct* vma)
 {
-	return 0;
+  return 0;
 }
 
 
 struct file_operations mainDeviceOps =
 {
-	.owner = THIS_MODULE,
-	.unlocked_ioctl = MainDeviceIoctl,
-	.compat_ioctl = MainDeviceIoctl,
-	.open = MainDeviceOpen,
-	.release = MainDeviceRelease,
-	.mmap = MainDeviceMemoryMap
+  .owner = THIS_MODULE,
+  .unlocked_ioctl = MainDeviceIoctl,
+  .compat_ioctl = MainDeviceIoctl,
+  .open = MainDeviceOpen,
+  .release = MainDeviceRelease,
+  .mmap = MainDeviceMemoryMap
 };
 
 struct miscdevice mainDevice =
 {
-	UKM_MINOR,
-	"ukm",
-	&mainDeviceOps
+  UKM_MINOR,
+  "ukm",
+  &mainDeviceOps
 };
 
 
 static int UKMInit(void)
 {
-	spin_lock_init(&global_mutex);
-	return misc_register(&mainDevice);
+  spin_lock_init(&global_mutex);
+  return misc_register(&mainDevice);
 }
 
 
 static void UKMExit(void)
 {
-	misc_deregister(&mainDevice);
+  misc_deregister(&mainDevice);
 }
 
 module_init(UKMInit);
