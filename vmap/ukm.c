@@ -21,6 +21,7 @@ SpinLock global_mutex;
 
 #define NUM_PAGES 4
 void* kmalloc_pages[NUM_PAGES];
+struct page* page_structs[NUM_PAGES];
 char* vmapped_ptr;
 
 static int driver_alloc_memory(void)
@@ -31,12 +32,13 @@ static int driver_alloc_memory(void)
   for (i = 0; i < NUM_PAGES; i++)
   {
     void* temp = 0;
-    if (!(temp = kmalloc(4096, GFP_KERNEL | __GFP_HIGHMEM)))
+    if (!(temp = kmalloc(4096, GFP_KERNEL)))
     {
       success = -1;
       break;
     }
     kmalloc_pages[i] = temp;
+    page_structs[i] = virt_to_page(temp);
   }
 
   if (!success)
@@ -50,7 +52,8 @@ static int driver_alloc_memory(void)
     }
   }
 
-  // TODO: vmap
+  vmapped_ptr = NULL;
+  vmapped_ptr = vmap(page_structs, NUM_PAGES, VM_MAP, PAGE_KERNEL); 
 
   return success;
 }
@@ -63,7 +66,9 @@ static int driver_test(void)
 static int driver_free_memory(void)
 {
   unsigned int i;
-  // TODO: un-vmap
+
+  if (vmapped_ptr)
+    vunmap(vmapped_ptr);
 
   for (i = 0; i < NUM_PAGES; i++)
   {
