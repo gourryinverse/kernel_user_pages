@@ -28,7 +28,7 @@ int main(void)
     goto exit;
   }
 
-  fd = open("/dev/ukm", O_RDONLY, 0);
+  fd = open("/dev/ukm", O_RDWR, 0);
 
   printf("Driver allocating memory\n");
   if ((ret = ioctl(fd, UKM_ALLOC_MEMORY, 0)) < 0)
@@ -44,10 +44,11 @@ int main(void)
     MAP_SHARED | MAP_FIXED, // Force overwrite of mappings
     fd,                     // kernel module file descriptor
     0);                     // base (page index 0 and 1 will be used)
+
   if (mmap_res == MAP_FAILED)
   {
     ret = -1;
-    printf("Error - failed to map over the region\n");
+    perror("mmap error");
     goto driver_cleanup;
   }
 
