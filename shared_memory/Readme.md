@@ -1,9 +1,7 @@
 # Usage
 This tester allocates 16KB of memory with malloc/aligned\_alloc.
 
-Tester requests the driver to allocate 8KB of memory using alloc\_page.
-The driver allocates and maps that memory using vmap, so it is 
-readable from the kernel's perspective.
+Tester requests the driver to allocate 8KB of memory using vmalloc.
 
 Tester then re-maps the second half the allocated area with the
 driver allocated pages.
@@ -27,7 +25,7 @@ sudo insmod ukm.ko
 
 ## Generating incorrect results
 
-This should not be possible, since allocations done with alloc\_page
+This should not be possible, since allocations done with vmalloc
 cannot be swapped.
 
 ## Results
