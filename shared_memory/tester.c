@@ -28,7 +28,7 @@ int main(void)
     goto exit;
   }
 
-  fd = open("/dev/ukm", O_RDONLY, 0);
+  fd = open("/dev/ukm", O_RDWR, 0);
 
   printf("Driver allocating memory\n");
   if ((ret = ioctl(fd, UKM_ALLOC_MEMORY, 0)) < 0)

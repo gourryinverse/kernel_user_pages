@@ -98,7 +98,7 @@ static void MainDeviceMemoryMapClose(struct vm_area_struct* vma)
 
 static int MainDeviceMemoryMapFault(struct vm_fault* vmf)
 {
-  vmf->page = virt_to_page(vmalloc_ptr + (4096 * (vmf->pgoff)));
+  vmf->page = vmalloc_to_page(vmalloc_ptr + (4096 * (vmf->pgoff)));
   if (vmf->page)
     get_page(vmf->page);
   else
