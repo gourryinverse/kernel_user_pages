@@ -20,7 +20,6 @@ typedef spinlock_t SpinLock;
 SpinLock global_mutex;
 
 #define NUM_PAGES 4
-void* kmalloc_pages[NUM_PAGES];
 struct page* page_structs[NUM_PAGES];
 char* vmapped_ptr;
 
@@ -28,31 +27,29 @@ static int driver_alloc_memory(void)
 {
   unsigned int i;
   int success = 0;
-  memset(kmalloc_pages, '\0', sizeof(kmalloc_pages));
+  vmapped_ptr = NULL;
+  memset(page_structs, '\0', sizeof(page_structs));
+
   for (i = 0; i < NUM_PAGES; i++)
   {
-    void* temp = 0;
-    if (!(temp = kmalloc(4096, GFP_KERNEL)))
+    if (!(page_structs[i] = alloc_page(GFP_KERNEL | __GFP_HIGHMEM)))
     {
       success = -1;
       break;
     }
-    kmalloc_pages[i] = temp;
-    page_structs[i] = virt_to_page(temp);
   }
 
   if (!success)
   {
     for (i = 0; i < NUM_PAGES; i++)
     {
-      if (kmalloc_pages[i])
-        kfree(kmalloc_pages[i]);
+      if (page_structs[i])
+        __free_page(page_structs[i]);
       else
         break;
     }
   }
 
-  vmapped_ptr = NULL;
   vmapped_ptr = vmap(page_structs, NUM_PAGES, VM_MAP, PAGE_KERNEL); 
 
   return success;
@@ -68,12 +65,18 @@ static int driver_free_memory(void)
   unsigned int i;
 
   if (vmapped_ptr)
+  {
     vunmap(vmapped_ptr);
+    vmapped_ptr = NULL;
+  }
 
   for (i = 0; i < NUM_PAGES; i++)
   {
-    if (kmalloc_pages[i])
-      kfree(kmalloc_pages[i]);
+    if (page_structs[i])
+    {
+      __free_page(page_structs[i]);
+      page_structs[i] = NULL;
+    }
     else
       break;
   }
