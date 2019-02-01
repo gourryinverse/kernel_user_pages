@@ -6,13 +6,13 @@ also demonstrate how to share those virtual mappings between user
 and kernel.
 
 The get\_user\_pages driver demonstrates the useage of that API.
+This driver shows that user memory can be mapped into kernel space.
 Additionally, demonstrate that these pages will never be swapped.
 This interface is GPL'd, and should not be used in proprietary
 software.
 
 The vmap driver demonstrates how to remap 2 separately allocated
-pages (using alloc\_page) into a single virtually contiguous block,
-and demonstrate that these pages will never be swapped.
+pages (using alloc\_page) into a single virtually contiguous block.
 
 The vmalloc driver demonstrates how to get (struct page\*) from
 a vmalloc allocation, so that it can be used with mmap.

@@ -34,7 +34,7 @@ static int driver_alloc_memory(void)
     goto exit;
 
   for (i = 0; i < NUM_PAGES; i++)
-   page_structs[i] =  virt_to_page(vmalloc_ptr + (i*4096));
+   page_structs[i] =  vmalloc_to_page(vmalloc_ptr + (i*4096));
 
   success = 0;
 exit:
