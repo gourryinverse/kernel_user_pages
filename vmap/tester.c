@@ -24,18 +24,20 @@ int main(void)
     printf("Error - driver failed to allocate and map memory\n");
     goto exit;
   }
-  printf("Driver mapped memory\n");
+  printf("Driver mapped memory - beginning test\n");
 
-  for (i = 0; i < 0x100000; i++)
+  for (i = 0; i < 0x10; i++)
   {
-    if ((ret = ioctl(fd, UKM_TEST, 0)) == 0)
+    if ((ret = ioctl(fd, UKM_TEST, 0)) < 0)
       break;
     sleep(1);
   }
+  printf("finished testing\n");
 
   if ((ret = ioctl(fd, UKM_FREE_MEMORY, 0)) < 0)
     printf("Error - driver fialed to unmap and free memory\n");
 
+  printf("Freed memory\n");
 exit:
 	return ret;
 }

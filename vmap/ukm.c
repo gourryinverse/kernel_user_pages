@@ -24,8 +24,34 @@ char* vmapped_ptr;
 
 static int driver_alloc_memory(void)
 {
+  unsigned int i;
+  int success = 0;
   memset(kmalloc_pages, '\0', sizeof(kmalloc_pages));
-  return 0;
+  for (i = 0; i < 1024; i++)
+  {
+    void* temp = 0;
+    if (!(temp = kmalloc(4096, GFP_KERNEL | __GFP_HIGHMEM)))
+    {
+      success = -1;
+      break;
+    }
+    kmalloc_pages[i] = temp;
+  }
+
+  if (!success)
+  {
+    for (i = 0; i < 1024; i++)
+    {
+      if (kmalloc_pages[i])
+        kfree(kmalloc_pages[i]);
+      else
+        break;
+    }
+  }
+
+  // TODO: vmap
+
+  return success;
 }
 
 static int driver_test(void)
@@ -35,6 +61,16 @@ static int driver_test(void)
 
 static int driver_free_memory(void)
 {
+  unsigned int i;
+  // TODO: un-vmap
+
+  for (i = 0; i < 1024; i++)
+  {
+    if (kmalloc_pages[i])
+      kfree(kmalloc_pages[i]);
+    else
+      break;
+  }
   return 0;
 }
 
