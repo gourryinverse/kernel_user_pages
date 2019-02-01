@@ -1,0 +1,6 @@
+enum driver_args
+{
+  UKM_ALLOC_MEMORY = 0x80000001,
+  UKM_TEST = 0x80000002,
+  UKM_FREE_MEMORY = 0x80000008,
+};

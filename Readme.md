@@ -1,30 +1,17 @@
-# Usage
-This driver maps user memory into the kernel and tests the affects it has on the system.
+# Info
 
-Open questions:
-1) does get\_user\_pages(\_fast) pin memory (cannot be moved or swapped)
-2) can i use largepages?
-3) affects of multiple users
+The get\_user\_pages driver demonstrates the useage of that API.
+Additionally, demonstrate that these pages will never be swapped.
+This interface is GPL'd, and should not be used in proprietary
+software.
 
-## Building
-make  
+The vmap driver demonstrates how to remap 2 separately allocated
+kmalloc pages into a single virtually contiguous block, and
+demonstrate that these pages will never be swapped.
 
-## Inserting the driver
-sudo insmod ukm.ko
+The mmap driver demonstrates how to allow user programs to allocate
+memory backed my pages allocated by the driver.
 
-## Generating incorrect results
-Launch tester, which allocates memory and maps it into the kernel.  It then turns off preempt and locks the cpu, and constantly checks the page(s) for modifications (bytes turn from A to B).  Once the change is detected, the driver the mutates the memory from B to C.
-
-Launch memspiker, which eats up user memory, causing the system to make use of swap.
- 
-sudo su
-
-./tester &
-
-./memspiker &
-
-
-## Results
-Expect pages to never be swapped (Any deadlock will mean this is untrue)
-Expect pages to mutate with the useland program (A to B)
-Expect pages to mutate with the kernel driver (B to C)
+The shared\_memory driver demonstrates a combination of vmap and
+mmap driver, such that a virtually contiguous range of memory
+can be shared between user and kernel mode in a friendly manner.
