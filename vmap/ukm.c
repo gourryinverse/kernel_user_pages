@@ -19,7 +19,8 @@ MODULE_LICENSE("GPL");
 typedef spinlock_t SpinLock;
 SpinLock global_mutex;
 
-void* kmalloc_pages[1024];
+#define NUM_PAGES 4
+void* kmalloc_pages[NUM_PAGES];
 char* vmapped_ptr;
 
 static int driver_alloc_memory(void)
@@ -27,7 +28,7 @@ static int driver_alloc_memory(void)
   unsigned int i;
   int success = 0;
   memset(kmalloc_pages, '\0', sizeof(kmalloc_pages));
-  for (i = 0; i < 1024; i++)
+  for (i = 0; i < NUM_PAGES; i++)
   {
     void* temp = 0;
     if (!(temp = kmalloc(4096, GFP_KERNEL | __GFP_HIGHMEM)))
@@ -40,7 +41,7 @@ static int driver_alloc_memory(void)
 
   if (!success)
   {
-    for (i = 0; i < 1024; i++)
+    for (i = 0; i < NUM_PAGES; i++)
     {
       if (kmalloc_pages[i])
         kfree(kmalloc_pages[i]);
@@ -64,7 +65,7 @@ static int driver_free_memory(void)
   unsigned int i;
   // TODO: un-vmap
 
-  for (i = 0; i < 1024; i++)
+  for (i = 0; i < NUM_PAGES; i++)
   {
     if (kmalloc_pages[i])
       kfree(kmalloc_pages[i]);
