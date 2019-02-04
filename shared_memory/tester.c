@@ -40,13 +40,20 @@ int main(void)
   printf("Replacing 2nd page with kernel memory\n");
   mmap_res = mmap(&memory[4096*2], 4096, PROT_WRITE | PROT_READ,
     MAP_SHARED | MAP_FIXED, fd, 0);
+  if (mmap_res == MAP_FAILED)
+  {
+    ret = -1;
+    printf("Error - failed to map over the first region\n");
+    goto driver_cleanup;
+  }
+
   mmap_res = mmap(&memory[4096*3], 4096, PROT_WRITE | PROT_READ,
-    MAP_SHARED | MAP_FIXED, fd, 1);
+    MAP_SHARED | MAP_FIXED, fd, 0x1000);
 
   if (mmap_res == MAP_FAILED)
   {
     ret = -1;
-    printf("Error - failed to map over the region\n");
+    printf("Error - failed to map over the second region\n");
     goto driver_cleanup;
   }
 
