@@ -38,12 +38,11 @@ int main(void)
   }
 
   printf("Replacing 2nd page with kernel memory\n");
-  mmap_res = mmap(&memory[4096*2], // Second half of memory
-    4096*2,                 // Two pages
-    PROT_WRITE | PROT_READ, // R/W
-    MAP_SHARED | MAP_FIXED, // Force overwrite of mappings
-    fd,                     // kernel module file descriptor
-    0);                     // base (page index 0 and 1 will be used)
+  mmap_res = mmap(&memory[4096*2], 4096, PROT_WRITE | PROT_READ,
+    MAP_SHARED | MAP_FIXED, fd, 0);
+  mmap_res = mmap(&memory[4096*3], 4096, PROT_WRITE | PROT_READ,
+    MAP_SHARED | MAP_FIXED, fd, 1);
+
   if (mmap_res == MAP_FAILED)
   {
     ret = -1;

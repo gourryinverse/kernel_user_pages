@@ -9,6 +9,7 @@
 #include <linux/version.h>
 #include <linux/highmem.h>
 #include <linux/mm.h>
+#include <linux/vmalloc.h>
 #pragma GCC diagnostic pop
 
 #include "./shared_state.h"
@@ -96,6 +97,17 @@ static void MainDeviceMemoryMapClose(struct vm_area_struct* vma)
 {
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+static int MainDeviceMemoryMapFault(struct vm_area_struct* vma, struct vm_fault* vmf)
+{
+  vmf->page = vmalloc_to_page(vmalloc_ptr + (4096 * (vmf->pgoff)));
+  if (vmf->page)
+    get_page(vmf->page);
+  else
+    return VM_FAULT_SIGBUS;
+  return 0;
+}
+#else
 static int MainDeviceMemoryMapFault(struct vm_fault* vmf)
 {
   vmf->page = vmalloc_to_page(vmalloc_ptr + (4096 * (vmf->pgoff)));
@@ -105,6 +117,7 @@ static int MainDeviceMemoryMapFault(struct vm_fault* vmf)
     return VM_FAULT_SIGBUS;
   return 0;
 }
+#endif
 
 struct vm_operations_struct mainDeviceVmOps =
 {
